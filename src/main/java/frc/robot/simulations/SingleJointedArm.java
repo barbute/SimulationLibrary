@@ -4,6 +4,7 @@
 
 package frc.robot.simulations;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
@@ -49,7 +50,7 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
 
     private PIDController m_armController = new PIDController(m_armP, m_armI, m_armD);
     private Encoder m_armEncoder = new Encoder(0, 1);
-    private PWMSparkMax m_armMotor = new PWMSparkMax(0);
+    private final PWMSparkMax m_kArmMotor = new PWMSparkMax(0);
 
     private DCMotor m_armGearbox = DCMotor.getVex775Pro(1);
 
@@ -124,22 +125,29 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
         // Configure encoder
         m_armEncoder.setDistancePerPulse(m_kArmEncoderDistancePerPulse);
 
+        // Configure controller
+        m_armController.enableContinuousInput(-180, 180);
+
         // Put mechanism to network table
+        SmartDashboard.putData("ArmSimDisplay",m_kMechanismDisplay);
         m_kMechArmTower.setColor(m_kMechArmTowerColor);
-        SmartDashboard.putData(m_kMechanismDisplay);
     }
 
 	@Override
 	public void simulationPeriodic() 
 	{
+        SmartDashboard.putNumber("/singleJointedArm/simulationPeriodic/armAppliedSpeed", m_kArmMotor.get());
+        SmartDashboard.putNumber("/singleJointedArm/simulationPeriodic/batteryVoltage", RobotController.getBatteryVoltage());
+
         // Set simulated input voltages
-		m_kArmSim.setInput(m_armMotor.get() * RobotController.getBatteryVoltage());
+		m_kArmSim.setInput(m_kArmMotor.get() * RobotController.getBatteryVoltage());
 
         // Update simulation (step)
         m_kArmSim.update(m_kArmSimulationStep);
 
         // Set encoder distance based on the simulation
         m_kArmEncoderSim.setDistance(m_kArmSim.getAngleRads());
+        SmartDashboard.putNumber("/singleJointedArm/simulationPeriodic/encoderDistanceRads", m_kArmEncoderSim.getDistance());
 
         // Simulate battery voltages
         RoboRioSim.setVInVoltage(
@@ -148,7 +156,6 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
 
         // Set the visualizer's angle based on simulation
         m_kMechArmBicep.setAngle(Units.radiansToDegrees(m_kArmSim.getAngleRads()));
-        SmartDashboard.putData(m_kMechanismDisplay);
 	}
 
     /** Load PID preferred values */
@@ -178,21 +185,38 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
      */
     public void armToSetpoint(double setpointRads)
     {
-        var controllerOutput = m_armController.calculate(m_armEncoder.getDistance(), setpointRads);
+        SmartDashboard.putNumber("/singleJointedArm/armToSetpoint/setpointRads", setpointRads);
+        var controllerOutput = MathUtil.clamp(
+            m_armController.calculate(m_armEncoder.getDistance(), setpointRads), -12.0, 12.0);
 
-        m_armMotor.setVoltage(controllerOutput);
+        SmartDashboard.putNumber("/singleJointedArm/armToSetpoint/controllerOutput", controllerOutput);
+
+        setArmVolts(controllerOutput);
+    }
+
+    /**
+     * Sets the voltage for the arm motor. Will clamp -12 to 12
+     * 
+     * @param volts Volts
+     */
+    public void setArmVolts(double volts)
+    {
+        final var kClampedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+
+        SmartDashboard.putNumber("/singleJointedArm/setArmVolts/clampedVolts", kClampedVolts);
+        m_kArmMotor.set(kClampedVolts / 12.0);
     }
 
     /** Set motor speed to 0 */
     public void stopArmMotor()
     {
-        m_armMotor.set(0.0);
+        m_kArmMotor.stopMotor();
     }
 
     @Override
     public void close() 
     {
-        m_armMotor.close();
+        m_kArmMotor.close();
         m_armEncoder.close();
         m_armController.close();
 
