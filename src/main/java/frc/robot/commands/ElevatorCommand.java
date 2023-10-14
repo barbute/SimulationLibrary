@@ -5,27 +5,27 @@
 package frc.robot.commands;
 
 import edu.wpi.first.wpilibj2.command.CommandBase;
-import frc.robot.simulations.SingleJointedArm;
+import frc.robot.simulations.Elevator;
 
-/** Moves the arm simulation to a setpoint */
-public class SingledJointedCommand extends CommandBase
+/** Moves the elevator simulation to a setpoint */
+public class ElevatorCommand extends CommandBase
 {
-    private SingleJointedArm m_SingleJointedArm;
+    private Elevator m_elevator;
 
     private double m_setpoint;
 
-    public SingledJointedCommand(SingleJointedArm singleJointedArm, double setpoint) 
+    public ElevatorCommand(Elevator elevator, double setpoint) 
     {
-        m_SingleJointedArm = singleJointedArm;
+        m_elevator = elevator;
         m_setpoint = setpoint;
 
-        addRequirements(singleJointedArm);
+        addRequirements(elevator);
     }
 
     @Override
     public void execute() 
     {
-        m_SingleJointedArm.armToSetpoint(m_setpoint);
+        m_elevator.elevatorToSetpoint(m_setpoint);
     }
 
     @Override

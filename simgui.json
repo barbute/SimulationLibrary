@@ -2,7 +2,8 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
-      "/SmartDashboard/ArmSimDisplay": "Mechanism2d"
+      "/SmartDashboard/ArmSimDisplay": "Mechanism2d",
+      "/SmartDashboard/ElevatorSimDisplay": "Mechanism2d"
     }
   },
   "NetworkTables": {

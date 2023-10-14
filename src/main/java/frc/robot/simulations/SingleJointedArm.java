@@ -39,7 +39,7 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
     private final double m_kArmMoI = SingleJointedArmSim.estimateMOI(m_kArmLengthM, m_kArmMassKg);
     private final double m_kArmMinAngleRads = Units.degreesToRadians(-75.0);
     private final double m_kArmMaxAngleRads = Units.degreesToRadians(255.0);
-    private final double m_kArmEncoderDistancePerPulseRads = 2.0 * Math.PI / 4096; // Radians
+    private final double m_kArmEncoderDistancePerPulseRads = 2.0 * Math.PI / 4096.0; // Radians
     private final double m_kArmSimulationStepMS = 0.020;
 
     /* ------------------------ Init arm objects ------------------------ */
@@ -51,11 +51,11 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
     private Encoder m_armEncoder = new Encoder(0, 1);
     private final PWMSparkMax m_kArmMotor = new PWMSparkMax(0);
 
-    private DCMotor m_armGearbox = DCMotor.getVex775Pro(1);
-
     /* ------------------------ Init sim objects ------------------------ */
+    private DCMotor m_kArmGearbox = DCMotor.getVex775Pro(1);
+
     private final SingleJointedArmSim m_kArmSim = new SingleJointedArmSim(
-        m_armGearbox, 
+        m_kArmGearbox, 
         m_kArmReduction, 
         m_kArmMoI, 
         m_kArmLengthM, 
