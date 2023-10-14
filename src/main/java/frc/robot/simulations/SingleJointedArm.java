@@ -10,7 +10,6 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.Encoder;
-import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.simulation.BatterySim;
@@ -40,11 +39,11 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
     private final double m_kArmMoI = SingleJointedArmSim.estimateMOI(m_kArmLengthM, m_kArmMassKg);
     private final double m_kArmMinAngleRads = Units.degreesToRadians(-75.0);
     private final double m_kArmMaxAngleRads = Units.degreesToRadians(255.0);
-    private final double m_kArmEncoderDistancePerPulse = 2.0 * Math.PI / 4096; // Radians
-    private final double m_kArmSimulationStep = 0.020;
+    private final double m_kArmEncoderDistancePerPulseRads = 2.0 * Math.PI / 4096; // Radians
+    private final double m_kArmSimulationStepMS = 0.020;
 
     /* ------------------------ Init arm objects ------------------------ */
-    private double m_armP = 50.0;
+    private double m_armP = 10.0;
     private double m_armI = 0.0;
     private double m_armD = 0.0;
 
@@ -63,7 +62,7 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
         m_kArmMinAngleRads, 
         m_kArmMaxAngleRads, 
         true,
-        VecBuilder.fill(m_kArmEncoderDistancePerPulse)
+        VecBuilder.fill(m_kArmEncoderDistancePerPulseRads)
     );
 
     private final EncoderSim m_kArmEncoderSim = new EncoderSim(m_armEncoder);
@@ -123,10 +122,10 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
 	public SingleJointedArm() 
     {
         // Configure encoder
-        m_armEncoder.setDistancePerPulse(m_kArmEncoderDistancePerPulse);
+        m_armEncoder.setDistancePerPulse(m_kArmEncoderDistancePerPulseRads);
 
         // Configure controller
-        m_armController.enableContinuousInput(-180, 180);
+        m_armController.enableContinuousInput(-180.0, 180.0);
 
         // Put mechanism to network table
         SmartDashboard.putData("ArmSimDisplay",m_kMechanismDisplay);
@@ -143,7 +142,7 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
 		m_kArmSim.setInput(m_kArmMotor.get() * RobotController.getBatteryVoltage());
 
         // Update simulation (step)
-        m_kArmSim.update(m_kArmSimulationStep);
+        m_kArmSim.update(m_kArmSimulationStepMS);
 
         // Set encoder distance based on the simulation
         m_kArmEncoderSim.setDistance(m_kArmSim.getAngleRads());
@@ -158,26 +157,6 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
         m_kMechArmBicep.setAngle(Units.radiansToDegrees(m_kArmSim.getAngleRads()));
 	}
 
-    /** Load PID preferred values */
-    public void loadPreferences()
-    {
-        if (m_armP != Preferences.getDouble("ArmP", m_armP))
-        {
-            m_armP = Preferences.getDouble("ArmP", m_armP);
-            m_armController.setP(m_armP);
-        }
-        if (m_armI != Preferences.getDouble("ArmI", m_armI))
-        {
-            m_armI = Preferences.getDouble("ArmI", m_armI);
-            m_armController.setI(m_armI);
-        }
-        if (m_armD != Preferences.getDouble("ArmD", m_armD))
-        {
-            m_armD = Preferences.getDouble("ArmD", m_armD);
-            m_armController.setD(m_armD);
-        }
-    }
-
     /**
      * Move the arm to a setpoint
      * 
@@ -186,8 +165,7 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
     public void armToSetpoint(double setpointRads)
     {
         SmartDashboard.putNumber("/singleJointedArm/armToSetpoint/setpointRads", setpointRads);
-        var controllerOutput = MathUtil.clamp(
-            m_armController.calculate(m_armEncoder.getDistance(), setpointRads), -12.0, 12.0);
+        var controllerOutput = m_armController.calculate(m_armEncoder.getDistance(), setpointRads);
 
         SmartDashboard.putNumber("/singleJointedArm/armToSetpoint/controllerOutput", controllerOutput);
 
@@ -204,7 +182,9 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
         final var kClampedVolts = MathUtil.clamp(volts, -12.0, 12.0);
 
         SmartDashboard.putNumber("/singleJointedArm/setArmVolts/clampedVolts", kClampedVolts);
-        m_kArmMotor.set(kClampedVolts / 12.0);
+        m_kArmMotor.setVoltage(kClampedVolts);
+
+        SmartDashboard.putNumber("/singleJointedArm/setArmVolts/armAppliedSpeed", m_kArmMotor.get());
     }
 
     /** Set motor speed to 0 */

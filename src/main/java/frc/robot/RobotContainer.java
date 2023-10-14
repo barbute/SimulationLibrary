@@ -7,7 +7,9 @@ package frc.robot;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.commands.SingledJointedCommand;
 import frc.robot.simulations.SingleJointedArm;
 
 public class RobotContainer 
@@ -18,35 +20,32 @@ public class RobotContainer
 
 	public RobotContainer() 
 	{
-        m_singleJointedArmSim.setDefaultCommand(Commands.runOnce(
-            () -> m_singleJointedArmSim.stopArmMotor(), 
-            m_singleJointedArmSim)
-        );
-
 		configureBindings();
 	}
 
 	private void configureBindings() 
     {
-        m_pilotController.a().whileTrue(Commands.runOnce(
-            () -> m_singleJointedArmSim.armToSetpoint(Units.degreesToRadians(200)), 
-            m_singleJointedArmSim)
-        );
+        m_pilotController.a()
+            .whileTrue(new SingledJointedCommand(m_singleJointedArmSim, Units.degreesToRadians(200.0)))
+            .whileFalse(new InstantCommand(
+                () -> m_singleJointedArmSim.stopArmMotor()));
 
-        m_pilotController.x().whileTrue(Commands.runOnce(
-            () -> m_singleJointedArmSim.armToSetpoint(Units.degreesToRadians(90)), 
-            m_singleJointedArmSim)
-        );
+        m_pilotController.x()
+            .whileTrue(new SingledJointedCommand(m_singleJointedArmSim, Units.degreesToRadians(90.0)))
+            .whileFalse(new InstantCommand(
+                () -> m_singleJointedArmSim.stopArmMotor()));
 
         m_pilotController.b().whileTrue(Commands.runOnce(
             () -> m_singleJointedArmSim.setArmVolts(6.0), 
             m_singleJointedArmSim)
-        );
+        ).whileFalse(new InstantCommand(
+            () -> m_singleJointedArmSim.stopArmMotor()));
 
         m_pilotController.y().whileTrue(Commands.runOnce(
             () -> m_singleJointedArmSim.setArmVolts(-6.0), 
             m_singleJointedArmSim)
-        );
+        ).whileFalse(new InstantCommand(
+            () -> m_singleJointedArmSim.stopArmMotor()));
     }
 
     public void closeAll()
