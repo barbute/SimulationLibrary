@@ -39,7 +39,7 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
     private final double m_kArmMoI = SingleJointedArmSim.estimateMOI(m_kArmLengthM, m_kArmMassKg);
     private final double m_kArmMinAngleRads = Units.degreesToRadians(-75.0);
     private final double m_kArmMaxAngleRads = Units.degreesToRadians(255.0);
-    private final double m_kArmEncoderDistancePerPulseRads = 2.0 * Math.PI / 4096; // Radians
+    private final double m_kArmEncoderDistancePerPulseRads = 2.0 * Math.PI / 4096.0; // Radians
     private final double m_kArmSimulationStepMS = 0.020;
 
     /* ------------------------ Init arm objects ------------------------ */
@@ -135,9 +135,6 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
 	@Override
 	public void simulationPeriodic() 
 	{
-        SmartDashboard.putNumber("/singleJointedArm/simulationPeriodic/armAppliedSpeed", m_kArmMotor.get());
-        SmartDashboard.putNumber("/singleJointedArm/simulationPeriodic/batteryVoltage", RobotController.getBatteryVoltage());
-
         // Set simulated input voltages
 		m_kArmSim.setInput(m_kArmMotor.get() * RobotController.getBatteryVoltage());
 
@@ -146,7 +143,6 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
 
         // Set encoder distance based on the simulation
         m_kArmEncoderSim.setDistance(m_kArmSim.getAngleRads());
-        SmartDashboard.putNumber("/singleJointedArm/simulationPeriodic/encoderDistanceRads", m_kArmEncoderSim.getDistance());
 
         // Simulate battery voltages
         RoboRioSim.setVInVoltage(
@@ -164,10 +160,7 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
      */
     public void armToSetpoint(double setpointRads)
     {
-        SmartDashboard.putNumber("/singleJointedArm/armToSetpoint/setpointRads", setpointRads);
         var controllerOutput = m_armController.calculate(m_armEncoder.getDistance(), setpointRads);
-
-        SmartDashboard.putNumber("/singleJointedArm/armToSetpoint/controllerOutput", controllerOutput);
 
         setArmVolts(controllerOutput);
     }
@@ -181,10 +174,7 @@ public class SingleJointedArm extends SubsystemBase implements AutoCloseable
     {
         final var kClampedVolts = MathUtil.clamp(volts, -12.0, 12.0);
 
-        SmartDashboard.putNumber("/singleJointedArm/setArmVolts/clampedVolts", kClampedVolts);
         m_kArmMotor.setVoltage(kClampedVolts);
-
-        SmartDashboard.putNumber("/singleJointedArm/setArmVolts/armAppliedSpeed", m_kArmMotor.get());
     }
 
     /** Set motor speed to 0 */
