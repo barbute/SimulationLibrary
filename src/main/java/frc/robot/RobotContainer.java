@@ -4,19 +4,18 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import frc.robot.commands.SingledJointedCommand;
-import frc.robot.simulations.SingleJointedArm;
+import frc.robot.commands.DoubleJointedCommand;
+import frc.robot.simulations.DoubleJointedArm;
 
 public class RobotContainer 
 {
     private CommandXboxController m_pilotController = new CommandXboxController(0);
 
-    private SingleJointedArm m_singleJointedArmSim = new SingleJointedArm();
+    private DoubleJointedArm m_doubleJointedArmSim = new DoubleJointedArm();
 
 	public RobotContainer() 
 	{
@@ -26,31 +25,15 @@ public class RobotContainer
 	private void configureBindings() 
     {
         m_pilotController.a()
-            .whileTrue(new SingledJointedCommand(m_singleJointedArmSim, Units.degreesToRadians(200.0)))
+            .whileTrue(new DoubleJointedCommand(m_doubleJointedArmSim))
             .whileFalse(new InstantCommand(
-                () -> m_singleJointedArmSim.stopArmMotor()));
-
-        m_pilotController.x()
-            .whileTrue(new SingledJointedCommand(m_singleJointedArmSim, Units.degreesToRadians(90.0)))
-            .whileFalse(new InstantCommand(
-                () -> m_singleJointedArmSim.stopArmMotor()));
-
-        m_pilotController.b().whileTrue(Commands.runOnce(
-            () -> m_singleJointedArmSim.setArmVolts(6.0), 
-            m_singleJointedArmSim)
-        ).whileFalse(new InstantCommand(
-            () -> m_singleJointedArmSim.stopArmMotor()));
-
-        m_pilotController.y().whileTrue(Commands.runOnce(
-            () -> m_singleJointedArmSim.setArmVolts(-6.0), 
-            m_singleJointedArmSim)
-        ).whileFalse(new InstantCommand(
-            () -> m_singleJointedArmSim.stopArmMotor()));
+                () -> m_doubleJointedArmSim.stopArmMotors())
+        );
     }
 
     public void closeAll()
     {
-        m_singleJointedArmSim.close();
+        m_doubleJointedArmSim.close();
         Commands.print("Closing all subsystems");
     }
 
