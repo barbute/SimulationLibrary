@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj.util.Color8Bit;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 /**
- * Class that represents a Single-Jointed Arm simulation
+ * Class that represents a Double-Jointed Arm simulation
  * 
  * Note that to use this the objects and their respective values will need to be
  * adjusted for your system
