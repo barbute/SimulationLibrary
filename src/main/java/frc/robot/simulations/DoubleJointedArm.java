@@ -12,6 +12,7 @@ import edu.wpi.first.math.numbers.N4;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.motorcontrol.PWMSparkMax;
 import edu.wpi.first.wpilibj.simulation.SingleJointedArmSim;
 import edu.wpi.first.wpilibj.smartdashboard.Mechanism2d;
@@ -203,6 +204,12 @@ public class DoubleJointedArm extends SubsystemBase implements AutoCloseable
         m_kMechArmJoint2.setAngle(
             Units.radiansToDegrees(m_armState.get(1, 0) - m_armState.get(0, 0))
         );
+
+        SmartDashboard.putNumber("/DJASP/J1Position", m_armState.get(0, 0));
+        SmartDashboard.putNumber("/DJASP/J2Position", m_armState.get(1, 0));
+
+        SmartDashboard.putNumber("DJASP/J1Angle", m_kMechArmJoint1.getAngle());
+        SmartDashboard.putNumber("DJASP/J2Angle", m_kMechArmJoint2.getAngle());
     }
     
     /** Moves the arm to a pre defined setpoint */
@@ -224,8 +231,23 @@ public class DoubleJointedArm extends SubsystemBase implements AutoCloseable
             Math.toRadians(m_joint2Controller.getSetpoint().velocity)
         );
 
+        SmartDashboard.putNumber("/DJA/C1positionError", m_joint1Controller.getPositionError());
+        SmartDashboard.putNumber("/DJA/C2positionError", m_joint2Controller.getPositionError());
+
+        SmartDashboard.putNumber("/DJA/C1positionGoal", m_joint1Controller.getGoal().position);
+        SmartDashboard.putNumber("/DJA/C2positionGoal", m_joint2Controller.getGoal().position);
+
+        SmartDashboard.putNumber("/DJA/C1output", controller1Output);
+        SmartDashboard.putNumber("/DJA/C2output", controller2Output);
+
+        SmartDashboard.putNumber("/DJA/C1FFoutput", feedforward1Output);
+        SmartDashboard.putNumber("/DJA/C2FFoutput", feedforward2Output);
+
         m_joint1Motor.set(controller1Output + feedforward1Output);
         m_joint2Motor.set(controller2Output + feedforward2Output);
+
+        SmartDashboard.putNumber("/DJA/C1AppliedVolts", m_joint1Motor.get() * 12.0);
+        SmartDashboard.putNumber("/DJA/C2AppliedVolts", m_joint2Motor.get() * 12.0);
     }
 
     /** Stops the arm motors */
